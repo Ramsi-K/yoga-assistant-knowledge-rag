@@ -1,0 +1,24 @@
+# direnv configuration template
+# Copy this file to .envrc and fill in your values
+# Then run: direnv allow
+
+# LLM Provider Configuration
+export LLM_PROVIDER=hyperbolic
+export LLM_API_KEY=your_api_key_here
+export LLM_BASE_URL=https://api.hyperbolic.xyz/v1
+export LLM_MODEL=deepseek-ai/DeepSeek-R1
+
+# Embedding Model
+export EMBEDDING_MODEL=text-embedding-3-small
+
+# Database Configuration
+export POSTGRES_HOST=localhost
+export POSTGRES_PORT=5432
+export POSTGRES_DB=yoga_rag
+export POSTGRES_USER=postgres
+export POSTGRES_PASSWORD=your_password_here
+
+# Application Configuration
+export DATA_PATH=data/yoga_data.csv
+export TOP_K_RETRIEVAL=5
+export SEARCH_MODE=hybrid
