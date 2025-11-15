@@ -1,0 +1,16 @@
+model,prompt_template,tokens_used,response_time_ms,relevant_pct,partly_relevant_pct,non_relevant_pct,error_pct,quality_score
+deepseek-ai/DeepSeek-V3,structured,1962.3,9917.8,90.0,10.0,0.0,0.0,95.0
+Qwen/Qwen2.5-72B-Instruct,structured,2000.85,6665.9,70.0,30.0,0.0,0.0,85.0
+Qwen/Qwen2.5-72B-Instruct,detailed,1947.1,5532.95,70.0,30.0,0.0,0.0,85.0
+deepseek-ai/DeepSeek-V3,detailed,1837.35,6741.1,65.0,35.0,0.0,0.0,82.5
+meta-llama/Meta-Llama-3.1-70B-Instruct,structured,1865.15,2469.05,65.0,35.0,0.0,0.0,82.5
+deepseek-ai/DeepSeek-R1,detailed,2044.1,9201.55,60.0,40.0,0.0,0.0,80.0
+meta-llama/Meta-Llama-3.1-70B-Instruct,concise,1694.5,1345.6,50.0,50.0,0.0,0.0,75.0
+meta-llama/Meta-Llama-3.1-70B-Instruct,detailed,1806.9,1825.7,50.0,50.0,0.0,0.0,75.0
+deepseek-ai/DeepSeek-V3,concise,1670.25,3990.45,50.0,50.0,0.0,0.0,75.0
+Qwen/Qwen2.5-72B-Instruct,concise,1687.05,3152.65,45.0,55.00000000000001,0.0,0.0,72.5
+deepseek-ai/DeepSeek-R1,concise,1965.05,6407.1,45.0,55.00000000000001,0.0,0.0,72.5
+deepseek-ai/DeepSeek-R1,structured,2048.9,9962.7,40.0,60.0,0.0,0.0,70.0
+NousResearch/Hermes-3-Llama-3.1-70B,detailed,0.0,2868.35,0.0,0.0,0.0,100.0,0.0
+NousResearch/Hermes-3-Llama-3.1-70B,structured,0.0,2853.3,0.0,0.0,0.0,100.0,0.0
+NousResearch/Hermes-3-Llama-3.1-70B,concise,0.0,2985.2,0.0,0.0,0.0,100.0,0.0
