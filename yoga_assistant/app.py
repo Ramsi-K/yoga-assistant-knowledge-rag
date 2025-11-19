@@ -122,6 +122,7 @@ def main():
                         retrieved_docs=result["retrieved_poses"],
                         response_time_ms=result["response_time_ms"],
                         tokens_used=result["tokens_used"],
+                        conversation_id=result["conversation_id"],
                     )
                 except Exception as e:
                     st.warning(f"Note: Logging failed ({str(e)})")
@@ -137,32 +138,94 @@ def main():
                         "tokens_used": result["tokens_used"],
                     }
                 )
+
+                # Display current answer immediately
+                st.markdown("---")
+                st.markdown("**Answer:**")
+                st.markdown(result["answer"])
+
+                # Show metadata in expander
+                with st.expander("Details"):
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        st.metric(
+                            "Response Time", f"{result['response_time_ms']}ms"
+                        )
+                    with col2:
+                        st.metric("Tokens Used", result["tokens_used"])
+
+                    if result["retrieved_poses"]:
+                        st.markdown("**Retrieved Poses:**")
+                        for pose in result["retrieved_poses"]:
+                            st.markdown(
+                                f"- {pose['pose_name']} "
+                                f"({pose['category']}, "
+                                f"{pose['difficulty_level']})"
+                            )
+
+                # Feedback for current answer
+                st.markdown("**Was this helpful?**")
+                col1, col2 = st.columns([1, 1])
+
+                with col1:
+                    if st.button("👍 Yes", key="current_thumbs_up"):
+                        success = update_feedback(result["conversation_id"], 1)
+                        if success:
+                            st.success("Thanks for your feedback!")
+                        else:
+                            st.error("Failed to save feedback")
+
+                with col2:
+                    if st.button("👎 No", key="current_thumbs_down"):
+                        success = update_feedback(
+                            result["conversation_id"], -1
+                        )
+                        if success:
+                            st.success("Thanks for your feedback!")
+                        else:
+                            st.error("Failed to save feedback")
         else:
             st.warning("Please enter a question.")
 
-    # Display conversation history
-    if st.session_state.conversation_history:
+    # Display past conversation history (excluding current)
+    if len(st.session_state.conversation_history) > 1:
         st.markdown("---")
-        st.subheader("Conversation")
 
-        # Show most recent conversation first
-        for i, conv in enumerate(
-            reversed(st.session_state.conversation_history)
+        # Exclude the most recent conversation (already shown above)
+        past_convos = st.session_state.conversation_history[:-1]
+        num_past = len(past_convos)
+
+        with st.expander(
+            f"📜 Past Conversations ({num_past})",
+            expanded=False,
         ):
-            with st.container():
-                # Question
-                st.markdown(f"**You:** {conv['question']}")
+            # Show most recent first (reversed)
+            for i, conv in enumerate(reversed(past_convos)):
+                # Each conversation in its own expander
+                question_preview = conv["question"][:80]
+                if len(conv["question"]) > 80:
+                    question_preview += "..."
 
-                # Answer
-                st.markdown(f"**Assistant:** {conv['answer']}")
+                with st.expander(
+                    f"Q: {question_preview}",
+                    expanded=False,
+                ):
+                    # Answer
+                    st.markdown("**Answer:**")
+                    st.markdown(conv["answer"])
 
-                # Metadata (collapsible)
-                with st.expander("Details"):
-                    st.markdown(
-                        f"**Response Time:** " f"{conv['response_time_ms']}ms"
-                    )
-                    st.markdown(f"**Tokens Used:** {conv['tokens_used']}")
+                    st.markdown("---")
 
+                    # Metadata
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        st.metric(
+                            "Response Time", f"{conv['response_time_ms']}ms"
+                        )
+                    with col2:
+                        st.metric("Tokens Used", conv["tokens_used"])
+
+                    # Retrieved poses
                     if conv["retrieved_poses"]:
                         st.markdown("**Retrieved Poses:**")
                         for pose in conv["retrieved_poses"]:
@@ -172,26 +235,31 @@ def main():
                                 f"{pose['difficulty_level']})"
                             )
 
-                # Feedback buttons
-                col1, col2, col3 = st.columns([1, 1, 10])
+                    st.markdown("---")
 
-                with col1:
-                    if st.button("👍", key=f"thumbs_up_{i}"):
-                        success = update_feedback(conv["conversation_id"], 1)
-                        if success:
-                            st.success("Thanks for your feedback!")
-                        else:
-                            st.error("Failed to save feedback")
+                    # Feedback buttons
+                    st.markdown("**Was this helpful?**")
+                    col1, col2 = st.columns([1, 1])
 
-                with col2:
-                    if st.button("👎", key=f"thumbs_down_{i}"):
-                        success = update_feedback(conv["conversation_id"], -1)
-                        if success:
-                            st.success("Thanks for your feedback!")
-                        else:
-                            st.error("Failed to save feedback")
+                    with col1:
+                        if st.button("👍 Yes", key=f"thumbs_up_{i}"):
+                            success = update_feedback(
+                                conv["conversation_id"], 1
+                            )
+                            if success:
+                                st.success("Thanks for your feedback!")
+                            else:
+                                st.error("Failed to save feedback")
 
-                st.markdown("---")
+                    with col2:
+                        if st.button("👎 No", key=f"thumbs_down_{i}"):
+                            success = update_feedback(
+                                conv["conversation_id"], -1
+                            )
+                            if success:
+                                st.success("Thanks for your feedback!")
+                            else:
+                                st.error("Failed to save feedback")
 
     # Sidebar with information
     with st.sidebar:

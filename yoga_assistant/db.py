@@ -62,6 +62,7 @@ def log_conversation(
     retrieved_docs: List[Dict],
     response_time_ms: int,
     tokens_used: int,
+    conversation_id: Optional[str] = None,
     relevance: Optional[str] = None,
     cost_usd: Optional[float] = None,
 ) -> str:
@@ -75,6 +76,7 @@ def log_conversation(
         retrieved_docs: List of retrieved pose documents
         response_time_ms: Response time in milliseconds
         tokens_used: Number of tokens used
+        conversation_id: UUID string (generated if not provided)
         relevance: Relevance score (RELEVANT/PARTLY_RELEVANT/NON_RELEVANT)
         cost_usd: Cost in USD (optional)
 
@@ -84,7 +86,8 @@ def log_conversation(
     Note:
         Handles errors gracefully - logs to console but doesn't raise exceptions
     """
-    conversation_id = str(uuid.uuid4())
+    if conversation_id is None:
+        conversation_id = str(uuid.uuid4())
 
     try:
         conn = get_db_connection()
