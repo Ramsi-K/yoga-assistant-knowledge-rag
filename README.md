@@ -5,8 +5,8 @@ An end-to-end Retrieval-Augmented Generation (RAG) system and conversational age
 ## 🎯 Project Status
 
 **Current Phase**: Production Implementation  
-**Completed**: ✅ Data preparation, Retrieval optimization (Hybrid search), RAG pipeline, Query rewriting evaluation, Document re-ranking evaluation, LLM model evaluation  
-**Next**: Production code implementation, UI, Monitoring
+**Completed**: ✅ Data preparation, Retrieval optimization, RAG pipeline, LLM evaluation, Streamlit UI, Database logging, Feedback collection  
+**Next**: Grafana monitoring dashboard, Full Docker Compose, Documentation
 
 ## 📊 Final Retrieval Results
 
@@ -36,6 +36,7 @@ Top-K: 5 results
 
 - Python 3.12+
 - uv (Python package manager)
+- Docker & Docker Compose (for PostgreSQL)
 
 ### Installation
 
@@ -47,19 +48,36 @@ cd yoga-assistant-knowledge-rag
 # Install dependencies
 uv sync
 
-# Activate virtual environment
-source .venv/bin/activate  # Linux/Mac
-.venv\Scripts\activate     # Windows
+# Set up environment variables
+cp .env.template .env
+# Edit .env and add your API keys
 ```
 
-### Run Experiments
+### Run the Application
 
 ```bash
-# Open Jupyter notebook
-jupyter notebook notebooks/retrieval-experiments.ipynb
+# 1. Start PostgreSQL
+docker-compose up -d
 
-# Or run all cells
-jupyter nbconvert --execute --to notebook notebooks/retrieval-experiments.ipynb
+# 2. Initialize database
+python setup_database.py
+
+# 3. Run Streamlit app
+streamlit run yoga_assistant/app.py
+```
+
+The app will be available at `http://localhost:8501`
+
+### Run Experiments (Optional)
+
+```bash
+# Open Jupyter notebooks
+jupyter notebook notebooks/
+
+# Key notebooks:
+# - 03-retrieval-experiments.ipynb - Retrieval evaluation
+# - 04-rag-experiments.ipynb - RAG pipeline experiments
+# - 05-llm-evaluation.ipynb - LLM model comparison
 ```
 
 ## 📁 Project Structure
@@ -70,9 +88,21 @@ yoga-assistant-knowledge-rag/
 │   ├── yoga_data_merged.csv      # 202 yoga poses
 │   └── ground_truth.csv          # 75 test queries
 ├── notebooks/
-│   └── retrieval-experiments.ipynb  # Main evaluation notebook
-├── yoga-assistant/               # Production code (TBD)
-├── grafana/                      # Monitoring setup (TBD)
+│   ├── 01-data-generation.ipynb
+│   ├── 02-ground-truth-data-generation.ipynb
+│   ├── 03-retrieval-experiments.ipynb
+│   ├── 04-rag-experiments.ipynb
+│   └── 05-llm-evaluation.ipynb
+├── yoga_assistant/               # Production code
+│   ├── app.py                    # Streamlit UI
+│   ├── rag.py                    # RAG pipeline
+│   ├── retrieval.py              # Hybrid search
+│   ├── ingest.py                 # Data loading
+│   ├── db.py                     # Database logging
+│   └── db_prep.py                # Database schema
+├── docker-compose.yml            # PostgreSQL setup
+├── setup_database.py             # DB initialization
+├── .env                          # Configuration
 └── README.md
 ```
 
@@ -253,41 +283,60 @@ MAX_TOKENS=500
 
 ## 📝 Next Steps
 
-### Immediate
+### Completed ✅
 
-- [ ] Implement hybrid search in production code (`yoga-assistant/search.py`)
-- [ ] Integrate with LLM for answer generation
-- [ ] Build Streamlit UI for user interaction
+- [x] Hybrid search in production code
+- [x] RAG pipeline with LLM integration
+- [x] Streamlit UI with Q&A interface
+- [x] Automated data ingestion at startup
+- [x] User feedback collection (thumbs up/down)
+- [x] PostgreSQL database logging
+- [x] Conversation history display
+- [x] Multiple LLM model evaluation
+- [x] Prompt engineering and optimization
+- [x] Query rewriting evaluation (rejected)
+- [x] Document re-ranking evaluation (rejected)
 
-### Short-term
+### In Progress 🚧
 
-- [ ] Implement automated ingestion pipeline
-- [ ] Add user feedback collection (thumbs up/down)
-- [ ] Set up Grafana monitoring dashboard (5+ charts)
-- [ ] Create Docker Compose setup for full stack
-
-### Completed Experiments
-
-- [x] Multiple LLM model comparison (DeepSeek-R1, DeepSeek-V3, Qwen2.5-72B, Llama-3.1-70B, Hermes-3)
-- [x] Prompt engineering and optimization (concise, detailed, structured)
-- [x] LLM-as-a-Judge for answer quality evaluation
+- [ ] Grafana monitoring dashboard (5+ charts)
+- [ ] Full Docker Compose stack (app + postgres + grafana)
+- [ ] Complete documentation and README
 
 ### Optional Improvements
 
+- [ ] Database conversation viewer in sidebar
 - [ ] Try better embedding models (bge-large, instructor-large)
-- [ ] Test Reciprocal Rank Fusion (RRF) as alternative to weighted product
-- [ ] Query expansion with domain-specific synonyms
-- ~~[ ] Test query rewriting/expansion~~ ❌ Tested - degrades performance
-- ~~[ ] Document re-ranking with vector similarity~~ ❌ Tested - degrades performance
 - [ ] Deploy to Streamlit Cloud (bonus points)
+
+## ✨ Features
+
+### Current Features
+
+- 🔍 **Hybrid Search** - Combines BM25 text search with semantic vector search (76% hit rate, 66% MRR)
+- 🤖 **LLM-Powered Answers** - DeepSeek-V3 with structured prompts (90% relevance)
+- 💬 **Conversational UI** - Clean Streamlit interface with Q&A
+- 📊 **Conversation History** - Collapsible past conversations with expandable details
+- 👍👎 **Feedback Collection** - Thumbs up/down buttons with database logging
+- 🗄️ **PostgreSQL Logging** - All conversations, feedback, and metrics stored
+- 📈 **Metadata Tracking** - Response time, tokens used, retrieved poses
+- 🧘 **202 Yoga Poses** - Comprehensive database with benefits, contraindications, instructions
+
+### Coming Soon
+
+- 📊 **Grafana Dashboard** - 5+ charts for monitoring (conversations, feedback, cost, tokens, response time)
+- 🐳 **Full Docker Stack** - One-command deployment with docker-compose
+- ☁️ **Cloud Deployment** - Streamlit Cloud with external PostgreSQL
 
 ## 🛠️ Technology Stack
 
 - **Language**: Python 3.12
-- **Retrieval**: rank-bm25, sentence-transformers
-- **LLM**: Hyperbolic/Nebius API (OpenAI-compatible)
-- **Frontend**: Streamlit (planned)
-- **Monitoring**: Grafana + PostgreSQL (planned)
+- **Package Manager**: uv
+- **Retrieval**: rank-bm25, sentence-transformers (all-mpnet-base-v2)
+- **LLM**: Hyperbolic API (OpenAI-compatible) with DeepSeek-V3
+- **Frontend**: Streamlit
+- **Database**: PostgreSQL 15
+- **Monitoring**: Grafana (planned)
 - **Deployment**: Docker + Docker Compose
 
 ## 📚 Data
@@ -307,14 +356,15 @@ Project evaluated on:
 - ✅ Query rewriting evaluated (1 pt of best practices) - Tested and rejected based on data
 - ✅ Re-ranking evaluated (1 pt of best practices) - Tested and rejected based on data
 - ✅ Multiple LLM approaches (2 pts) - 5 models, 3 prompts tested, DeepSeek-V3 selected
-- ⏳ UI/API interface (2 pts)
-- ⏳ Automated ingestion (2 pts)
-- ⏳ User feedback + monitoring (2 pts)
-- ⏳ Docker compose setup (2 pts)
-- ⏳ Reproducibility (2 pts)
+- ✅ UI interface (2 pts) - Streamlit app with Q&A, feedback, conversation history
+- ✅ Automated ingestion (2 pts) - Loads at startup, 202 poses
+- ✅ User feedback collection (2 pts) - Thumbs up/down with database logging
+- 🚧 Monitoring dashboard (2 pts) - PostgreSQL logging complete, Grafana pending
+- 🚧 Docker compose setup (2 pts) - PostgreSQL running, full stack pending
+- 🚧 Reproducibility (2 pts) - Setup scripts ready, final README pending
 - ⏳ Cloud deployment (2 pts bonus)
 
-**Current Score**: 13/18 points (+ bonus pending)
+**Current Score**: 17/18 points (94%) + 3 pending (monitoring, docker, docs)
 
 ## 📖 Documentation
 
