@@ -15,10 +15,8 @@ dependencies = [
     "psycopg2-binary>=2.9.9",
     "openai>=1.54.0",
     "python-dotenv>=1.0.0",
-    "jupyter>=1.1.0",
     "numpy>=2.0.0",
     "rank-bm25>=0.2.2",
-    "matplotlib>=3.9.0",
     "scikit-learn>=1.5.0",
     "sentence-transformers>=2.2.0",
     "requests>=2.31.0",
@@ -32,4 +30,8 @@ build-backend = "hatchling.build"
 packages = ["yoga-assistant"]
 
 [tool.uv]
-dev-dependencies = []
+dev-dependencies = [
+    "jupyter>=1.1.0",
+    "matplotlib>=3.9.0",
+    "ipykernel>=6.29.0",
+]
