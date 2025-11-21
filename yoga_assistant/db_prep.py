@@ -49,9 +49,9 @@ def get_db_connection():
         raise psycopg2.Error(f"Failed to connect to database: {str(e)}")
 
 
-def create_tables():
+def create_tables(retry_count=5, retry_delay=2):
     """
-    Create the conversations table and indices.
+    Create the conversations table and indices with retry logic.
 
     Table schema:
     - id: UUID primary key
@@ -71,78 +71,97 @@ def create_tables():
     - feedback (for feedback statistics)
     - relevance (for relevance statistics)
     - model (for model usage statistics)
+
+    Args:
+        retry_count: Number of connection retry attempts
+        retry_delay: Delay in seconds between retries
+
+    Returns:
+        True if successful, False otherwise
     """
-    try:
-        conn = get_db_connection()
-        cursor = conn.cursor()
+    import time
 
-        # Create conversations table
-        cursor.execute(
-            """
-            CREATE TABLE IF NOT EXISTS conversations (
-                id UUID PRIMARY KEY,
-                timestamp TIMESTAMP NOT NULL,
-                question TEXT NOT NULL,
-                answer TEXT NOT NULL,
-                model TEXT NOT NULL,
-                retrieved_docs JSONB,
-                relevance TEXT,
-                response_time_ms INTEGER,
-                tokens_used INTEGER,
-                cost_usd DECIMAL(10, 6),
-                feedback INTEGER CHECK (feedback IN (-1, 1))
+    for attempt in range(retry_count):
+        try:
+            conn = get_db_connection()
+            cursor = conn.cursor()
+
+            # Create conversations table
+            cursor.execute(
+                """
+                CREATE TABLE IF NOT EXISTS conversations (
+                    id UUID PRIMARY KEY,
+                    timestamp TIMESTAMP NOT NULL,
+                    question TEXT NOT NULL,
+                    answer TEXT NOT NULL,
+                    model TEXT NOT NULL,
+                    retrieved_docs JSONB,
+                    relevance TEXT,
+                    response_time_ms INTEGER,
+                    tokens_used INTEGER,
+                    cost_usd DECIMAL(10, 6),
+                    feedback INTEGER CHECK (feedback IN (-1, 1))
+                )
+                """
             )
-            """
-        )
 
-        print("✓ Created conversations table")
+            print("✓ Created conversations table")
 
-        # Create indices for common queries
-        cursor.execute(
-            """
-            CREATE INDEX IF NOT EXISTS idx_conversations_timestamp 
-            ON conversations(timestamp DESC)
-            """
-        )
-        print("✓ Created index on timestamp")
+            # Create indices for common queries
+            cursor.execute(
+                """
+                CREATE INDEX IF NOT EXISTS idx_conversations_timestamp 
+                ON conversations(timestamp DESC)
+                """
+            )
+            print("✓ Created index on timestamp")
 
-        cursor.execute(
-            """
-            CREATE INDEX IF NOT EXISTS idx_conversations_feedback 
-            ON conversations(feedback) 
-            WHERE feedback IS NOT NULL
-            """
-        )
-        print("✓ Created index on feedback")
+            cursor.execute(
+                """
+                CREATE INDEX IF NOT EXISTS idx_conversations_feedback 
+                ON conversations(feedback) 
+                WHERE feedback IS NOT NULL
+                """
+            )
+            print("✓ Created index on feedback")
 
-        cursor.execute(
-            """
-            CREATE INDEX IF NOT EXISTS idx_conversations_relevance 
-            ON conversations(relevance) 
-            WHERE relevance IS NOT NULL
-            """
-        )
-        print("✓ Created index on relevance")
+            cursor.execute(
+                """
+                CREATE INDEX IF NOT EXISTS idx_conversations_relevance 
+                ON conversations(relevance) 
+                WHERE relevance IS NOT NULL
+                """
+            )
+            print("✓ Created index on relevance")
 
-        cursor.execute(
-            """
-            CREATE INDEX IF NOT EXISTS idx_conversations_model 
-            ON conversations(model)
-            """
-        )
-        print("✓ Created index on model")
+            cursor.execute(
+                """
+                CREATE INDEX IF NOT EXISTS idx_conversations_model 
+                ON conversations(model)
+                """
+            )
+            print("✓ Created index on model")
 
-        # Commit changes
-        conn.commit()
-        cursor.close()
-        conn.close()
+            # Commit changes
+            conn.commit()
+            cursor.close()
+            conn.close()
 
-        print("\n✓ Database schema initialized successfully!")
-        return True
+            print("\n✓ Database schema initialized successfully!")
+            return True
 
-    except Exception as e:
-        print(f"Error creating tables: {str(e)}")
-        return False
+        except Exception as e:
+            if attempt < retry_count - 1:
+                print(f"Connection attempt {attempt + 1} failed: {str(e)}")
+                print(f"Retrying in {retry_delay} seconds...")
+                time.sleep(retry_delay)
+            else:
+                print(
+                    f"Error creating tables after {retry_count} attempts: {str(e)}"
+                )
+                return False
+
+    return False
 
 
 def drop_tables():
@@ -251,6 +270,7 @@ def main():
 
     Usage:
         python db_prep.py [--drop]
+        python -m yoga_assistant.db_prep [--drop]
 
     Options:
         --drop: Drop existing tables before creating (use with caution)
@@ -263,18 +283,24 @@ def main():
     # Check for --drop flag
     if len(sys.argv) > 1 and sys.argv[1] == "--drop":
         print("WARNING: Dropping existing tables...")
-        response = input("Are you sure? (yes/no): ")
-        if response.lower() == "yes":
+        # In Docker, auto-confirm; in interactive mode, ask
+        if os.getenv("DOCKER_CONTAINER"):
+            print("Running in Docker container - auto-confirming drop")
             drop_tables()
             print()
         else:
-            print("Aborted.")
-            return
+            response = input("Are you sure? (yes/no): ")
+            if response.lower() == "yes":
+                drop_tables()
+                print()
+            else:
+                print("Aborted.")
+                return
 
-    # Create tables
+    # Create tables with retry logic (important for Docker startup)
     print("Creating database schema...")
     print()
-    success = create_tables()
+    success = create_tables(retry_count=10, retry_delay=2)
 
     if not success:
         print("\n✗ Failed to initialize database")
