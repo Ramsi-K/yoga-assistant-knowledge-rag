@@ -1,0 +1,56 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+
+# Jupyter
+.ipynb_checkpoints/
+notebooks/
+
+# Git
+.git/
+.gitignore
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Environment
+.env
+
+# Tests
+tests/
+*.test
+
+# Documentation
+*.md
+!README.md
+
+# Assets (not needed in container)
+assets/
+
+# Grafana (separate service)
+grafana/
+
+# Docker
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# Setup scripts (handled by entrypoint)
+setup_database.py
+
+# Cache
+.cache/
