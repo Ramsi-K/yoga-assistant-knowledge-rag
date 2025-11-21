@@ -4,6 +4,8 @@ An end-to-end Retrieval-Augmented Generation (RAG) system and conversational age
 
 ![Yoga Assistant UI](./assets/yoga_assistant_ui.png)
 
+This project demonstrates full-stack RAG system design with rigorous retrieval evaluation, LLM model benchmarking, monitoring, and production deployment.
+
 ## 📑 Table of Contents
 
 - [Project Status](#-project-status)
@@ -13,8 +15,6 @@ An end-to-end Retrieval-Augmented Generation (RAG) system and conversational age
 - [Project Structure](#-project-structure)
 - [Experiments Completed](#-experiments-completed)
 - [Monitoring Dashboard](#-monitoring-dashboard)
-- [Project Completion](#-project-completion)
-- [Features](#-features)
 - [Technology Stack](#-technology-stack)
 - [Data](#-data)
 - [Documentation](#-documentation)
@@ -23,9 +23,32 @@ An end-to-end Retrieval-Augmented Generation (RAG) system and conversational age
 
 ## 🎯 Project Status
 
-**Status**: ✅ **Production Ready**  
-**Completed**: Data preparation, Retrieval optimization, RAG pipeline, LLM evaluation, Streamlit UI, Database logging, Feedback collection, Grafana monitoring, Docker deployment, Documentation  
-**Score**: 19/20 points (95%)
+**Status**: ✅ Complete
+
+### ✨ Features & Completion Summary
+
+#### Core Features
+
+- Hybrid search (BM25 + vector, alpha=0.4)
+- LLM-powered RAG pipeline
+- Streamlit conversational UI
+- PostgreSQL logging + conversation history
+- Feedback system (thumbs up/down)
+- Grafana dashboard (7 visualizations)
+- Docker Compose deployment
+- Embedding cache for fast startup
+- 202-pose yoga dataset with full metadata
+
+#### Completed Work
+
+- Hybrid search integrated in production
+- RAG pipeline implemented end-to-end
+- LLM model evaluation + prompt benchmarking
+- Query rewriting evaluation (rejected)
+- Document re-ranking evaluation (rejected)
+- Full documentation, notebooks, experiments
+- Monitoring setup with Grafana
+- Docker stack complete
 
 ## 📊 Final Retrieval Results
 
@@ -110,7 +133,7 @@ streamlit run yoga_assistant/app.py
 
 App: <http://localhost:8501>
 
-### Run Experiments (Optional)
+### Run Experiments
 
 ```bash
 # Open Jupyter notebooks
@@ -130,7 +153,7 @@ jupyter notebook notebooks/
 
 **Answer:**
 
-```
+```text
 Downward-Facing Dog (Adho Mukha Svanasana) Instructions
 Category: Standing | Difficulty: Beginner
 
@@ -159,7 +182,7 @@ Tips and Modifications:
 
 **Answer:**
 
-```
+```text
 Holding Time for Warrior II (Virabhadrasana II)
 
 Recommended: 3-5 breaths per side
@@ -184,7 +207,7 @@ Tips:
 
 ## 📁 Project Structure
 
-```
+```text
 yoga-assistant-knowledge-rag/
 ├── data/
 │   ├── yoga_data_merged.csv      # 202 yoga poses with full details
@@ -214,9 +237,6 @@ yoga-assistant-knowledge-rag/
 │   ├── yoga_assistant_ui.png
 │   ├── grafana_dashboard.png
 │   └── retrieval_comparison.png
-│
-├── .kiro/                        # Kiro IDE configuration
-│   └── specs/yoga-rag-system/    # Project specifications
 │
 ├── Dockerfile                    # Application container
 ├── docker-compose.yml            # Full stack (app, postgres, grafana)
@@ -392,19 +412,50 @@ TEMPERATURE=0.3
 MAX_TOKENS=500
 ```
 
-### 8. Key Insights
+## 🔍 Findings & Insights
 
-- Hybrid search successfully combines BM25's recall with Vector's ranking quality
-- Alpha=0.4 gives optimal balance (40% BM25, 60% Vector)
-- 23% MRR improvement provides significantly better user experience
-- Query rewriting degrades performance - skip it
-- Document re-ranking degrades performance - skip it
-- Simple, direct user queries work best with hybrid search
-- Re-ranking only works with NEW signals (LLM, cross-encoder, different model)
-- DeepSeek-V3 with structured prompts provides best answer quality (90% relevance)
-- Structured prompts outperform concise and detailed across all models
-- Response time trade-offs are acceptable when accuracy is critical
-- Original 90%/85% targets were overly optimistic for this dataset
+### What Works
+
+- **Hybrid Search (Weighted Product, alpha=0.4)**  
+  Achieved 76% hit rate and 66% MRR, preserving BM25 recall while improving ranking by 23%.  
+  Best balance of keyword and semantic signals.
+
+- **Simple User Queries**  
+  Natural phrasing outperforms LLM-enhanced rewrites.  
+  No preprocessing needed.
+
+- **RAG Pipeline**  
+  End-to-end flow is stable with ~1.5s notebook latency and strong answer quality.
+
+- **DeepSeek-V3 + Structured Prompt**  
+  90% relevant answers and 95% quality score.  
+  Best accuracy for yoga guidance across all models and templates.
+
+### What Doesn’t Work
+
+- **Query Rewriting**
+
+  - MRR: -21%
+  - Hit rate: -17%
+  - Latency: +60%  
+    Too verbose, mismatches database language. Removed from production.
+
+- **Document Re-ranking (same embeddings)**
+  - MRR: -6.8%
+  - Hit rate: -3.3%  
+    Throws away BM25 signal and provides no new information.  
+    Only useful if powered by a _new_ signal (LLM re-ranker, cross-encoder).
+
+### Key Lessons
+
+- Hybrid search (40% BM25, 60% vector) is difficult to beat for small datasets.
+- Simple queries outperform rewritten ones for retrieval stability.
+- Re-ranking only helps when adding a new or stronger signal.
+- Structured prompts outperform concise/detailed across all LLMs.
+- DeepSeek-V3 provides best accuracy; Qwen2.5-72B offers best speed/quality trade-off.
+- For knowledge systems, accuracy is worth slower responses.
+- Original 90/85% targets were unrealistic for a 202-document dataset.
+- Always measure before adopting “best practices” — most don’t generalize.
 
 ## 📊 Monitoring Dashboard
 
@@ -439,40 +490,6 @@ open http://localhost:3000/d/yoga-rag-dashboard
 
 See [grafana/README.md](grafana/README.md) for detailed setup instructions.
 
-## 📝 Project Completion
-
-### ✅ Completed Features
-
-- [x] Hybrid search in production code
-- [x] RAG pipeline with LLM integration
-- [x] Streamlit UI with Q&A interface
-- [x] Automated data ingestion at startup
-- [x] User feedback collection (thumbs up/down)
-- [x] PostgreSQL database logging
-- [x] Conversation history display
-- [x] Multiple LLM model evaluation
-- [x] Prompt engineering and optimization
-- [x] Query rewriting evaluation (rejected - not beneficial)
-- [x] Document re-ranking evaluation (rejected - not beneficial)
-- [x] Grafana monitoring dashboard (7 charts)
-- [x] Full Docker Compose stack (app + postgres + grafana)
-- [x] Complete documentation and README
-- [x] Embedding caching for fast startup
-
-## ✨ Features
-
-- 🔍 **Hybrid Search** - Combines BM25 text search with semantic vector search (76% hit rate, 66% MRR)
-- 🤖 **LLM-Powered Answers** - Multiple models supported via Hyperbolic API (DeepSeek, Llama, Qwen)
-- 💬 **Conversational UI** - Clean Streamlit interface with Q&A
-- 📊 **Conversation History** - Collapsible past conversations with expandable details
-- 👍👎 **Feedback Collection** - Thumbs up/down buttons with database logging
-- 🗄️ **PostgreSQL Logging** - All conversations, feedback, and metrics stored
-- 📈 **Grafana Dashboard** - 7 charts for monitoring (conversations, feedback, cost, tokens, response time)
-- 🐳 **Docker Deployment** - One-command deployment with docker-compose
-- ⚡ **Embedding Cache** - Fast startup with cached embeddings (30s → 2s)
-- 📈 **Metadata Tracking** - Response time, tokens used, retrieved poses
-- 🧘 **202 Yoga Poses** - Comprehensive database with benefits, contraindications, instructions
-
 ## 🛠️ Technology Stack
 
 - **Language**: Python 3.12
@@ -481,7 +498,7 @@ See [grafana/README.md](grafana/README.md) for detailed setup instructions.
 - **LLM**: Hyperbolic API (OpenAI-compatible) with DeepSeek-V3
 - **Frontend**: Streamlit
 - **Database**: PostgreSQL 15
-- **Monitoring**: Grafana (planned)
+- **Monitoring**: Grafana
 - **Deployment**: Docker + Docker Compose
 
 ## 📚 Data
@@ -497,62 +514,6 @@ See [grafana/README.md](grafana/README.md) for detailed setup instructions.
 - `notebooks/05-llm-evaluation.ipynb` - LLM model and prompt evaluation
 - `notebooks/TASK_5.3_FINDINGS.md` - Query rewriting evaluation findings
 - Task tracking in `.kiro/specs/yoga-rag-system/`
-
-## 🔍 Experiment Findings Summary
-
-### ✅ What Works
-
-1. **Hybrid Search (Weighted Product, alpha=0.4)**
-
-   - 76% hit rate, 66% MRR
-   - Best balance of recall and ranking quality
-   - Production-ready
-
-2. **Simple User Queries**
-
-   - Natural language works great with hybrid search
-   - No preprocessing needed
-   - Fast and effective
-
-3. **RAG Pipeline**
-
-   - End-to-end flow working
-   - ~1.5s response time
-   - Good answer quality
-
-4. **DeepSeek-V3 with Structured Prompts**
-   - 90% relevant answers
-   - 95% quality score
-   - Best accuracy for yoga guidance
-
-### ❌ What Doesn't Work
-
-1. **Query Rewriting**
-
-   - Degrades hit rate by 17%
-   - Degrades MRR by 21%
-   - Adds 60% latency
-   - **Conclusion**: Skip it entirely
-
-2. **Document Re-ranking (with same embeddings)**
-   - Degrades hit rate by 3.3%
-   - Degrades MRR by 6.8%
-   - Throws away BM25 signal from hybrid search
-   - **Conclusion**: Only works with NEW signals (LLM, cross-encoder)
-
-### 🔬 Lessons Learned
-
-- Not all RAG best practices help every system
-- Always measure and validate before implementing
-- Simple solutions often outperform complex ones
-- User's natural language is often better than LLM-enhanced queries
-- Re-ranking only helps when adding NEW information, not reusing existing signals
-- Hybrid search with optimized alpha is hard to beat for small datasets
-- Structured prompts consistently outperform concise or detailed prompts
-- Model selection requires balancing accuracy vs speed based on use case
-- For knowledge systems, accuracy (90% relevance) is worth slower response times (9.9s)
-- LLM-as-a-Judge is effective for evaluating answer quality at scale
-- Trust the data over assumptions - test everything before production
 
 ## 📄 License
 
