@@ -1,0 +1,249 @@
+{
+  "dashboard": {
+    "title": "Yoga RAG System Monitoring",
+    "uid": "yoga-rag-dashboard",
+    "timezone": "browser",
+    "schemaVersion": 38,
+    "version": 0,
+    "refresh": "30s",
+    "editable": true,
+    "panels": [
+      {
+        "id": 1,
+        "title": "Recent Conversations",
+        "type": "table",
+        "gridPos": {
+          "x": 0,
+          "y": 0,
+          "w": 24,
+          "h": 8
+        },
+        "datasource": {
+          "type": "grafana-postgresql-datasource"
+        },
+        "targets": [
+          {
+            "datasource": {
+              "type": "grafana-postgresql-datasource"
+            },
+            "format": "table",
+            "rawSql": "SELECT timestamp, question, LEFT(answer, 100) || '...' as answer_snippet, model, relevance, CASE WHEN feedback = 1 THEN '👍' WHEN feedback = -1 THEN '👎' ELSE '-' END as feedback, response_time_ms, tokens_used FROM conversations ORDER BY timestamp DESC LIMIT 10",
+            "refId": "A",
+            "rawQuery": true
+          }
+        ]
+      },
+      {
+        "id": 2,
+        "title": "User Feedback Distribution",
+        "type": "piechart",
+        "gridPos": {
+          "x": 0,
+          "y": 8,
+          "w": 8,
+          "h": 8
+        },
+        "datasource": {
+          "type": "grafana-postgresql-datasource"
+        },
+        "targets": [
+          {
+            "datasource": {
+              "type": "grafana-postgresql-datasource"
+            },
+            "format": "table",
+            "rawSql": "SELECT CASE WHEN feedback = 1 THEN 'Positive' WHEN feedback = -1 THEN 'Negative' END as metric, COUNT(*) as value FROM conversations WHERE feedback IS NOT NULL GROUP BY feedback",
+            "refId": "A",
+            "rawQuery": true
+          }
+        ],
+        "options": {
+          "legend": {
+            "displayMode": "list",
+            "placement": "bottom"
+          },
+          "pieType": "pie",
+          "displayLabels": ["percent"]
+        }
+      },
+      {
+        "id": 3,
+        "title": "Relevance Score",
+        "type": "gauge",
+        "gridPos": {
+          "x": 8,
+          "y": 8,
+          "w": 8,
+          "h": 8
+        },
+        "datasource": {
+          "type": "grafana-postgresql-datasource"
+        },
+        "targets": [
+          {
+            "datasource": {
+              "type": "grafana-postgresql-datasource"
+            },
+            "format": "table",
+            "rawSql": "SELECT ROUND((COUNT(CASE WHEN relevance = 'RELEVANT' THEN 1 END)::DECIMAL / NULLIF(COUNT(*), 0)) * 100, 2) as value FROM conversations WHERE relevance IS NOT NULL",
+            "refId": "A",
+            "rawQuery": true
+          }
+        ],
+        "options": {
+          "showThresholdLabels": false,
+          "showThresholdMarkers": true
+        },
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percent",
+            "min": 0,
+            "max": 100,
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                { "value": 0, "color": "red" },
+                { "value": 50, "color": "yellow" },
+                { "value": 80, "color": "green" }
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 4,
+        "title": "Model Usage Distribution",
+        "type": "barchart",
+        "gridPos": {
+          "x": 16,
+          "y": 8,
+          "w": 8,
+          "h": 8
+        },
+        "datasource": {
+          "type": "grafana-postgresql-datasource"
+        },
+        "targets": [
+          {
+            "datasource": {
+              "type": "grafana-postgresql-datasource"
+            },
+            "format": "table",
+            "rawSql": "SELECT model as metric, COUNT(*) as value FROM conversations GROUP BY model ORDER BY value DESC",
+            "refId": "A",
+            "rawQuery": true
+          }
+        ],
+        "options": {
+          "orientation": "horizontal",
+          "showValue": "auto"
+        }
+      },
+      {
+        "id": 5,
+        "title": "LLM Cost Over Time",
+        "type": "timeseries",
+        "gridPos": {
+          "x": 0,
+          "y": 16,
+          "w": 12,
+          "h": 8
+        },
+        "datasource": {
+          "type": "grafana-postgresql-datasource"
+        },
+        "targets": [
+          {
+            "datasource": {
+              "type": "grafana-postgresql-datasource"
+            },
+            "format": "time_series",
+            "rawSql": "SELECT timestamp as time, cost_usd as value FROM conversations WHERE cost_usd IS NOT NULL ORDER BY timestamp",
+            "refId": "A",
+            "rawQuery": true
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "currencyUSD",
+            "custom": {
+              "lineInterpolation": "smooth",
+              "fillOpacity": 10,
+              "showPoints": "auto"
+            }
+          }
+        }
+      },
+      {
+        "id": 6,
+        "title": "Token Usage Over Time",
+        "type": "timeseries",
+        "gridPos": {
+          "x": 12,
+          "y": 16,
+          "w": 12,
+          "h": 8
+        },
+        "datasource": {
+          "type": "grafana-postgresql-datasource"
+        },
+        "targets": [
+          {
+            "datasource": {
+              "type": "grafana-postgresql-datasource"
+            },
+            "format": "time_series",
+            "rawSql": "SELECT timestamp as time, tokens_used as value FROM conversations ORDER BY timestamp",
+            "refId": "A",
+            "rawQuery": true
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "short",
+            "custom": {
+              "lineInterpolation": "smooth",
+              "fillOpacity": 10,
+              "showPoints": "auto"
+            }
+          }
+        }
+      },
+      {
+        "id": 7,
+        "title": "Response Time Over Time",
+        "type": "timeseries",
+        "gridPos": {
+          "x": 0,
+          "y": 24,
+          "w": 24,
+          "h": 8
+        },
+        "datasource": {
+          "type": "grafana-postgresql-datasource"
+        },
+        "targets": [
+          {
+            "datasource": {
+              "type": "grafana-postgresql-datasource"
+            },
+            "format": "time_series",
+            "rawSql": "SELECT timestamp as time, response_time_ms as value FROM conversations ORDER BY timestamp",
+            "refId": "A",
+            "rawQuery": true
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "ms",
+            "custom": {
+              "lineInterpolation": "smooth",
+              "fillOpacity": 10,
+              "showPoints": "auto"
+            }
+          }
+        }
+      }
+    ]
+  }
+}
