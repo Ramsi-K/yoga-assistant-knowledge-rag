@@ -2,11 +2,13 @@
 
 An end-to-end Retrieval-Augmented Generation (RAG) system and conversational agent for yoga knowledge. Provides context-aware answers and guidance on yoga poses, breathing techniques (pranayama), and sequencing.
 
+![](./assets/yoga_assistant_ui.png)
+
 ## 🎯 Project Status
 
 **Current Phase**: Production Implementation  
-**Completed**: ✅ Data preparation, Retrieval optimization, RAG pipeline, LLM evaluation, Streamlit UI, Database logging, Feedback collection  
-**Next**: Grafana monitoring dashboard, Full Docker Compose, Documentation
+**Completed**: ✅ Data preparation, Retrieval optimization, RAG pipeline, LLM evaluation, Streamlit UI, Database logging, Feedback collection, Grafana monitoring  
+**Next**: Full Docker Compose, Documentation
 
 ## 📊 Final Retrieval Results
 
@@ -42,7 +44,7 @@ Top-K: 5 results
 
 ```bash
 # Clone the repository
-git clone <repo-url>
+git clone https://github.com/Ramsi-K/yoga-assistant-knowledge-rag
 cd yoga-assistant-knowledge-rag
 
 # Install dependencies
@@ -281,6 +283,38 @@ MAX_TOKENS=500
 - Response time trade-offs are acceptable when accuracy is critical
 - Original 90%/85% targets were overly optimistic for this dataset
 
+## � MonitSoring Dashboard
+
+The system includes a comprehensive Grafana dashboard for monitoring performance and user feedback:
+
+![Grafana Dashboard](./assets/grafana_dashboard.png)
+
+### Dashboard Features
+
+- **Recent Conversations Table** - Last 10 conversations with timestamps, questions, answers, and feedback
+- **User Feedback Distribution** - Pie chart showing positive vs negative feedback
+- **Relevance Score** - Gauge showing percentage of RELEVANT responses
+- **Model Usage Distribution** - Bar chart showing which LLM models are being used
+- **LLM Cost Over Time** - Time series tracking spending
+- **Token Usage Over Time** - Time series monitoring token consumption
+- **Response Time Over Time** - Time series tracking latency
+
+### Setup Monitoring
+
+```bash
+# Start Grafana
+docker-compose up -d grafana
+
+# Initialize dashboard
+python grafana/init.py
+
+# Access dashboard
+open http://localhost:3000/d/yoga-rag-dashboard
+# Login: admin/admin
+```
+
+See [grafana/README.md](grafana/README.md) for detailed setup instructions.
+
 ## 📝 Next Steps
 
 ### Completed ✅
@@ -296,10 +330,10 @@ MAX_TOKENS=500
 - [x] Prompt engineering and optimization
 - [x] Query rewriting evaluation (rejected)
 - [x] Document re-ranking evaluation (rejected)
+- [x] Grafana monitoring dashboard (7 charts)
 
 ### In Progress 🚧
 
-- [ ] Grafana monitoring dashboard (5+ charts)
 - [ ] Full Docker Compose stack (app + postgres + grafana)
 - [ ] Complete documentation and README
 
@@ -359,12 +393,12 @@ Project evaluated on:
 - ✅ UI interface (2 pts) - Streamlit app with Q&A, feedback, conversation history
 - ✅ Automated ingestion (2 pts) - Loads at startup, 202 poses
 - ✅ User feedback collection (2 pts) - Thumbs up/down with database logging
-- 🚧 Monitoring dashboard (2 pts) - PostgreSQL logging complete, Grafana pending
-- 🚧 Docker compose setup (2 pts) - PostgreSQL running, full stack pending
+- ✅ Monitoring dashboard (2 pts) - Grafana with 7 charts tracking all metrics
+- 🚧 Docker compose setup (2 pts) - PostgreSQL + Grafana running, full stack pending
 - 🚧 Reproducibility (2 pts) - Setup scripts ready, final README pending
 - ⏳ Cloud deployment (2 pts bonus)
 
-**Current Score**: 17/18 points (94%) + 3 pending (monitoring, docker, docs)
+**Current Score**: 19/20 points (95%) + 2 pending (docker, docs)
 
 ## 📖 Documentation
 
