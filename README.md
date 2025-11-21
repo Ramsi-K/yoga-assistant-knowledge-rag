@@ -36,39 +36,56 @@ Top-K: 5 results
 
 ### Prerequisites
 
-- Python 3.12+
-- uv (Python package manager)
-- Docker & Docker Compose (for PostgreSQL)
+- Docker and Docker Compose
+- Hyperbolic API key (get from <https://app.hyperbolic.xyz/>)
 
-### Installation
+### Option 1: Docker (Recommended) ⭐
+
+**One command to run everything:**
 
 ```bash
-# Clone the repository
-git clone https://github.com/Ramsi-K/yoga-assistant-knowledge-rag
-cd yoga-assistant-knowledge-rag
-
-# Install dependencies
-uv sync
-
-# Set up environment variables
+# 1. Set up environment
 cp .env.template .env
-# Edit .env and add your API keys
+# Edit .env and add your Hyperbolic API key
+
+# 2. Start everything
+docker-compose up --build
 ```
 
-### Run the Application
+**That's it!**
+
+- App: <http://localhost:8501>
+- Grafana: <http://localhost:3000> (admin/admin)
+
+Database initialization happens automatically. No manual setup needed.
+
+**See [DOCKER.md](DOCKER.md) for advanced configuration and troubleshooting.**
+
+---
+
+### Option 2: Local Development
+
+**For developers who want to modify code:**
 
 ```bash
-# 1. Start PostgreSQL
-docker-compose up -d
+# 1. Start database only
+docker-compose up -d postgres grafana
 
-# 2. Initialize database
+# 2. Install dependencies
+uv sync
+
+# 3. Set up environment
+cp .env.template .env
+# Edit .env and add your API key
+
+# 4. Initialize database (first time only)
 python setup_database.py
 
-# 3. Run Streamlit app
+# 5. Run app locally
 streamlit run yoga_assistant/app.py
 ```
 
-The app will be available at `http://localhost:8501`
+App: <http://localhost:8501>
 
 ### Run Experiments (Optional)
 

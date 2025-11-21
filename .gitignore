@@ -208,3 +208,6 @@ __marimo__/
 
 # Kiro
 .Kiro
+
+# Embeddings cache
+.cache/
