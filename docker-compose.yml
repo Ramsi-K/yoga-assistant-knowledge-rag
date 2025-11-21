@@ -15,6 +15,8 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+    networks:
+      - yoga_network
 
   grafana:
     image: grafana/grafana:latest
@@ -39,7 +41,96 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - yoga_network
+
+  grafana-init:
+    image: python:3.12-slim
+    container_name: yoga_rag_grafana_init
+    environment:
+      GRAFANA_URL: http://grafana:3000
+      GRAFANA_USER: admin
+      GRAFANA_PASSWORD: admin
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: yoga_rag
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: yoga_password_123
+    volumes:
+      - ./grafana:/grafana:ro
+    depends_on:
+      grafana:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    networks:
+      - yoga_network
+    command: >
+      sh -c "
+        pip install --no-cache-dir requests python-dotenv &&
+        python /grafana/init.py &&
+        echo 'Grafana initialization complete!'
+      "
+    restart: "no"
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: yoga_rag_app
+    environment:
+      # LLM Configuration
+      LLM_PROVIDER: ${LLM_PROVIDER:-hyperbolic}
+      LLM_API_KEY: ${LLM_API_KEY}
+      LLM_BASE_URL: ${LLM_BASE_URL:-https://api.hyperbolic.xyz/v1}
+      LLM_MODEL: ${LLM_MODEL:-meta-llama/Meta-Llama-3.1-70B-Instruct}
+
+      # Database Configuration
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: yoga_rag
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: yoga_password_123
+
+      # Application Configuration
+      DATA_PATH: ${DATA_PATH:-data/yoga_data_merged.csv}
+      TOP_K_RETRIEVAL: ${TOP_K_RETRIEVAL:-5}
+      SEARCH_MODE: ${SEARCH_MODE:-hybrid}
+    ports:
+      - "8501:8501"
+    volumes:
+      # Mount data directory for persistence
+      - ./data:/app/data:ro
+      # Mount .env file if it exists (for local development)
+      - ./.env:/app/.env:ro
+      # Cache embeddings to avoid regenerating on restart
+      - embeddings_cache:/app/.cache
+    depends_on:
+      postgres:
+        condition: service_healthy
+      grafana-init:
+        condition: service_completed_successfully
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import requests; requests.get('http://localhost:8501/_stcore/health')",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - yoga_network
+    restart: unless-stopped
 
 volumes:
   postgres_data:
   grafana_data:
+  embeddings_cache:
+
+networks:
+  yoga_network:
+    driver: bridge
