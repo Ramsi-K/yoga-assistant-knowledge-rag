@@ -7,7 +7,7 @@ This module implements the complete RAG pipeline based on experiments:
 - NO query rewriting (experiments showed no benefit)
 - NO re-ranking (experiments showed degradation)
 
-Based on experiments in notebooks/04-rag-experiments.ipynb and 
+Based on experiments in notebooks/04-rag-experiments.ipynb and
 notebooks/05-llm-evaluation.ipynb:
 - Model: deepseek-ai/DeepSeek-V3
 - Prompt: structured
@@ -34,14 +34,10 @@ def create_llm_client() -> OpenAI:
         OpenAI client instance
     """
     api_key = os.getenv("LLM_API_KEY")
-    base_url = os.getenv(
-        "LLM_BASE_URL", "https://api.hyperbolic.xyz/v1"
-    )
+    base_url = os.getenv("LLM_BASE_URL", "https://api.hyperbolic.xyz/v1")
 
     if not api_key:
-        raise ValueError(
-            "LLM_API_KEY not found in environment variables"
-        )
+        raise ValueError("LLM_API_KEY not found in environment variables")
 
     return OpenAI(api_key=api_key, base_url=base_url)
 
@@ -95,14 +91,14 @@ def create_structured_prompt(question: str, context: str) -> str:
     Returns:
         Formatted prompt string
     """
-    prompt = f"""You are a yoga expert assistant. Answer the question using the provided information. Structure your answer clearly with relevant details.
-
-CONTEXT:
-{context}
-
-QUESTION: {question}
-
-Provide a clear, structured answer:"""
+    prompt = (
+        "You are a yoga expert assistant. Answer the question using "
+        "the provided information. Structure your answer clearly with "
+        "relevant details.\n\n"
+        f"CONTEXT:\n{context}\n\n"
+        f"QUESTION: {question}\n\n"
+        "Provide a clear, structured answer:"
+    )
 
     return prompt
 
@@ -204,8 +200,13 @@ def rag_pipeline(
     retrieved_ids = retrieval_system.search(question, top_k=top_k)
 
     if not retrieved_ids:
+        no_results_msg = (
+            "I couldn't find any relevant yoga poses for your question. "
+            "Could you please rephrase or ask about a specific pose, "
+            "category, or benefit?"
+        )
         return {
-            "answer": "I couldn't find any relevant yoga poses for your question. Could you please rephrase or ask about a specific pose, category, or benefit?",
+            "answer": no_results_msg,
             "conversation_id": conversation_id,
             "retrieved_poses": [],
             "tokens_used": 0,
@@ -228,12 +229,14 @@ def rag_pipeline(
     # Format retrieved poses for response
     retrieved_poses = []
     for pose_id in retrieved_ids:
-        retrieved_poses.append({
-            "id": pose_id,
-            "pose_name": pose_dict[pose_id]["pose_name"],
-            "category": pose_dict[pose_id]["category"],
-            "difficulty_level": pose_dict[pose_id]["difficulty_level"],
-        })
+        retrieved_poses.append(
+            {
+                "id": pose_id,
+                "pose_name": pose_dict[pose_id]["pose_name"],
+                "category": pose_dict[pose_id]["category"],
+                "difficulty_level": pose_dict[pose_id]["difficulty_level"],
+            }
+        )
 
     return {
         "answer": generation_result["answer"],

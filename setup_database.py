@@ -21,7 +21,7 @@ import time
 
 sys.path.insert(0, "yoga_assistant")
 
-from db_prep import create_tables, verify_schema
+from db_prep import create_tables, verify_schema  # noqa: E402
 
 if __name__ == "__main__":
     print("=" * 60)

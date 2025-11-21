@@ -2,13 +2,30 @@
 
 An end-to-end Retrieval-Augmented Generation (RAG) system and conversational agent for yoga knowledge. Provides context-aware answers and guidance on yoga poses, breathing techniques (pranayama), and sequencing.
 
-![](./assets/yoga_assistant_ui.png)
+![Yoga Assistant UI](./assets/yoga_assistant_ui.png)
+
+## 📑 Table of Contents
+
+- [Project Status](#-project-status)
+- [Final Retrieval Results](#-final-retrieval-results)
+- [Quick Start](#-quick-start)
+- [Usage Examples](#-usage-examples)
+- [Project Structure](#-project-structure)
+- [Experiments Completed](#-experiments-completed)
+- [Monitoring Dashboard](#-monitoring-dashboard)
+- [Project Completion](#-project-completion)
+- [Features](#-features)
+- [Technology Stack](#-technology-stack)
+- [Data](#-data)
+- [Documentation](#-documentation)
+- [Experiment Findings Summary](#-experiment-findings-summary)
+- [License](#-license)
 
 ## 🎯 Project Status
 
-**Current Phase**: Production Implementation  
-**Completed**: ✅ Data preparation, Retrieval optimization, RAG pipeline, LLM evaluation, Streamlit UI, Database logging, Feedback collection, Grafana monitoring  
-**Next**: Full Docker Compose, Documentation
+**Status**: ✅ **Production Ready**  
+**Completed**: Data preparation, Retrieval optimization, RAG pipeline, LLM evaluation, Streamlit UI, Database logging, Feedback collection, Grafana monitoring, Docker deployment, Documentation  
+**Score**: 19/20 points (95%)
 
 ## 📊 Final Retrieval Results
 
@@ -21,6 +38,12 @@ An end-to-end Retrieval-Augmented Generation (RAG) system and conversational age
 | **Hybrid Weighted Product** | 76.0%    | 66.0% | ✅ **BEST** (+23% MRR) |
 
 **Key Achievement**: Hybrid search improved MRR by 23% while maintaining BM25's recall!
+
+![Retrieval Comparison](./assets/retrieval_comparison.png)
+_Comparison of different retrieval approaches_
+
+![Hybrid Search Alpha Tuning](./assets/hybrid_search_alpha_tuning.png)
+_Optimal alpha value (0.4) for hybrid search_
 
 ### Production Configuration
 
@@ -99,30 +122,113 @@ jupyter notebook notebooks/
 # - 05-llm-evaluation.ipynb - LLM model comparison
 ```
 
+## 💬 Usage Examples
+
+### Example 1: Pose Instructions
+
+**Question:** "How do I do downward facing dog?"
+
+**Answer:**
+
+```
+Downward-Facing Dog (Adho Mukha Svanasana) Instructions
+Category: Standing | Difficulty: Beginner
+
+Step-by-Step Instructions:
+1. Start on all fours with hands shoulder-width apart
+2. Walk your hands forward a few inches
+3. Lift your hips up and back, straightening arms and legs
+4. Engage your core muscles
+5. Keep palms and heels grounded
+6. Hold for 3-5 breaths
+
+Tips and Modifications:
+- Use blocks or strap for wrist support
+- Bend knees slightly for shoulder/back issues
+- Pregnant women: keep knees bent, hips lifted slightly
+```
+
+**Retrieved Poses:** Downward-Facing Dog, One-Legged Downward-Facing Dog, Upward-Facing Dog  
+**Response Time:** 2.0s | **Tokens:** 1,894
+
+---
+
+### Example 2: Practice Guidance
+
+**Question:** "How long should I hold Warrior II?"
+
+**Answer:**
+
+```
+Holding Time for Warrior II (Virabhadrasana II)
+
+Recommended: 3-5 breaths per side
+
+This allows you to:
+- Establish a strong foundation
+- Feel the stretch in chest and shoulders
+- Improve balance and focus
+- Cultivate confidence and inner strength
+
+Tips:
+- Start with 2-3 breaths and gradually increase
+- Focus on steady, smooth breathing
+- Engage core and maintain proper alignment
+- Release immediately if you feel discomfort
+```
+
+**Retrieved Poses:** Warrior Pose I, Warrior Pose II, Warrior II with a Twist  
+**Response Time:** 2.2s | **Tokens:** 1,701
+
+---
+
 ## 📁 Project Structure
 
 ```
 yoga-assistant-knowledge-rag/
 ├── data/
-│   ├── yoga_data_merged.csv      # 202 yoga poses
-│   └── ground_truth.csv          # 75 test queries
-├── notebooks/
+│   ├── yoga_data_merged.csv      # 202 yoga poses with full details
+│   └── ground_truth.csv          # 75 test queries for evaluation
+│
+├── notebooks/                    # Experimentation and evaluation
 │   ├── 01-data-generation.ipynb
 │   ├── 02-ground-truth-data-generation.ipynb
 │   ├── 03-retrieval-experiments.ipynb
 │   ├── 04-rag-experiments.ipynb
 │   └── 05-llm-evaluation.ipynb
-├── yoga_assistant/               # Production code
+│
+├── yoga_assistant/               # Production application code
 │   ├── app.py                    # Streamlit UI
-│   ├── rag.py                    # RAG pipeline
-│   ├── retrieval.py              # Hybrid search
-│   ├── ingest.py                 # Data loading
-│   ├── db.py                     # Database logging
-│   └── db_prep.py                # Database schema
-├── docker-compose.yml            # PostgreSQL setup
-├── setup_database.py             # DB initialization
-├── .env                          # Configuration
-└── README.md
+│   ├── rag.py                    # RAG pipeline with LLM
+│   ├── retrieval.py              # Hybrid search (BM25 + Vector)
+│   ├── ingest.py                 # Data loading and validation
+│   ├── db.py                     # Database operations
+│   └── db_prep.py                # Database schema initialization
+│
+├── grafana/                      # Monitoring setup
+│   ├── dashboard.json            # Dashboard configuration (7 panels)
+│   ├── init.py                   # Automated setup script
+│   └── README.md                 # Setup instructions
+│
+├── assets/                       # Images and screenshots
+│   ├── yoga_assistant_ui.png
+│   ├── grafana_dashboard.png
+│   └── retrieval_comparison.png
+│
+├── .kiro/                        # Kiro IDE configuration
+│   └── specs/yoga-rag-system/    # Project specifications
+│
+├── Dockerfile                    # Application container
+├── docker-compose.yml            # Full stack (app, postgres, grafana)
+├── docker-entrypoint.sh          # Container startup script
+├── .dockerignore                 # Docker build exclusions
+├── setup_database.py             # Local dev DB initialization
+├── pyproject.toml                # Dependencies (uv)
+├── uv.lock                       # Locked dependency versions
+├── .env.template                 # Environment variables template
+├── .env                          # Configuration (not in git)
+├── DOCKER.md                     # Docker deployment guide
+└── README.md                     # This file
 ```
 
 ## 🔬 Experiments Completed
@@ -300,11 +406,12 @@ MAX_TOKENS=500
 - Response time trade-offs are acceptable when accuracy is critical
 - Original 90%/85% targets were overly optimistic for this dataset
 
-## � MonitSoring Dashboard
+## 📊 Monitoring Dashboard
 
 The system includes a comprehensive Grafana dashboard for monitoring performance and user feedback:
 
 ![Grafana Dashboard](./assets/grafana_dashboard.png)
+_Real-time monitoring with 7 panels tracking conversations, feedback, cost, and performance_
 
 ### Dashboard Features
 
@@ -332,9 +439,9 @@ open http://localhost:3000/d/yoga-rag-dashboard
 
 See [grafana/README.md](grafana/README.md) for detailed setup instructions.
 
-## 📝 Next Steps
+## 📝 Project Completion
 
-### Completed ✅
+### ✅ Completed Features
 
 - [x] Hybrid search in production code
 - [x] RAG pipeline with LLM integration
@@ -345,39 +452,26 @@ See [grafana/README.md](grafana/README.md) for detailed setup instructions.
 - [x] Conversation history display
 - [x] Multiple LLM model evaluation
 - [x] Prompt engineering and optimization
-- [x] Query rewriting evaluation (rejected)
-- [x] Document re-ranking evaluation (rejected)
+- [x] Query rewriting evaluation (rejected - not beneficial)
+- [x] Document re-ranking evaluation (rejected - not beneficial)
 - [x] Grafana monitoring dashboard (7 charts)
-
-### In Progress 🚧
-
-- [ ] Full Docker Compose stack (app + postgres + grafana)
-- [ ] Complete documentation and README
-
-### Optional Improvements
-
-- [ ] Database conversation viewer in sidebar
-- [ ] Try better embedding models (bge-large, instructor-large)
-- [ ] Deploy to Streamlit Cloud (bonus points)
+- [x] Full Docker Compose stack (app + postgres + grafana)
+- [x] Complete documentation and README
+- [x] Embedding caching for fast startup
 
 ## ✨ Features
 
-### Current Features
-
 - 🔍 **Hybrid Search** - Combines BM25 text search with semantic vector search (76% hit rate, 66% MRR)
-- 🤖 **LLM-Powered Answers** - DeepSeek-V3 with structured prompts (90% relevance)
+- 🤖 **LLM-Powered Answers** - Multiple models supported via Hyperbolic API (DeepSeek, Llama, Qwen)
 - 💬 **Conversational UI** - Clean Streamlit interface with Q&A
 - 📊 **Conversation History** - Collapsible past conversations with expandable details
 - 👍👎 **Feedback Collection** - Thumbs up/down buttons with database logging
 - 🗄️ **PostgreSQL Logging** - All conversations, feedback, and metrics stored
+- 📈 **Grafana Dashboard** - 7 charts for monitoring (conversations, feedback, cost, tokens, response time)
+- 🐳 **Docker Deployment** - One-command deployment with docker-compose
+- ⚡ **Embedding Cache** - Fast startup with cached embeddings (30s → 2s)
 - 📈 **Metadata Tracking** - Response time, tokens used, retrieved poses
 - 🧘 **202 Yoga Poses** - Comprehensive database with benefits, contraindications, instructions
-
-### Coming Soon
-
-- 📊 **Grafana Dashboard** - 5+ charts for monitoring (conversations, feedback, cost, tokens, response time)
-- 🐳 **Full Docker Stack** - One-command deployment with docker-compose
-- ☁️ **Cloud Deployment** - Streamlit Cloud with external PostgreSQL
 
 ## 🛠️ Technology Stack
 
@@ -395,27 +489,6 @@ See [grafana/README.md](grafana/README.md) for detailed setup instructions.
 - **Yoga Poses**: 202 poses with details (name, benefits, contraindications, instructions)
 - **Ground Truth**: 75 test queries with known relevant poses
 - **Evaluation Metrics**: Hit Rate, Mean Reciprocal Rank (MRR), Latency, Token Usage
-
-## 🎓 Evaluation Criteria
-
-Project evaluated on:
-
-- ✅ Well-described problem (2 pts)
-- ✅ Full RAG flow (2 pts) - Complete pipeline implemented
-- ✅ Multiple retrieval approaches (2 pts) - BM25, Vector, Hybrid tested
-- ✅ Hybrid search implemented (1 pt of best practices)
-- ✅ Query rewriting evaluated (1 pt of best practices) - Tested and rejected based on data
-- ✅ Re-ranking evaluated (1 pt of best practices) - Tested and rejected based on data
-- ✅ Multiple LLM approaches (2 pts) - 5 models, 3 prompts tested, DeepSeek-V3 selected
-- ✅ UI interface (2 pts) - Streamlit app with Q&A, feedback, conversation history
-- ✅ Automated ingestion (2 pts) - Loads at startup, 202 poses
-- ✅ User feedback collection (2 pts) - Thumbs up/down with database logging
-- ✅ Monitoring dashboard (2 pts) - Grafana with 7 charts tracking all metrics
-- 🚧 Docker compose setup (2 pts) - PostgreSQL + Grafana running, full stack pending
-- 🚧 Reproducibility (2 pts) - Setup scripts ready, final README pending
-- ⏳ Cloud deployment (2 pts bonus)
-
-**Current Score**: 19/20 points (95%) + 2 pending (docker, docs)
 
 ## 📖 Documentation
 

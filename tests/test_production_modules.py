@@ -81,7 +81,7 @@ try:
     # Test prompt creation
     test_question = "What are good poses for beginners?"
     prompt = create_structured_prompt(test_question, context[:500])
-    print(f"✓ Prompt created")
+    print("✓ Prompt created")
     print(f"  Prompt length: {len(prompt)} characters")
 
 except Exception as e:

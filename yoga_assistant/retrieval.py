@@ -1,8 +1,9 @@
 """
 Retrieval module for Yoga RAG system.
 
-This module implements the best retrieval approach found through experimentation:
-Weighted Product Hybrid Search (BM25 + Vector) with alpha=0.4
+This module implements the best retrieval approach found through
+experimentation: Weighted Product Hybrid Search (BM25 + Vector)
+with alpha=0.4
 
 Based on experiments in notebooks/03-retrieval-experiments.ipynb:
 - Hit Rate: 76.0%
@@ -16,7 +17,7 @@ import pickle
 import hashlib
 import numpy as np
 import pandas as pd
-from typing import List, Dict, Any
+from typing import List, Dict
 from rank_bm25 import BM25Okapi
 from sentence_transformers import SentenceTransformer
 from sklearn.metrics.pairwise import cosine_similarity
@@ -160,9 +161,8 @@ class VectorSearch:
         # Load the sentence-transformers model
         print(f"Loading embedding model: {embedding_model}...")
         self.model = SentenceTransformer(embedding_model)
-        print(
-            f"Model loaded. Embedding dimension: {self.model.get_sentence_embedding_dimension()}"
-        )
+        dim = self.model.get_sentence_embedding_dimension()
+        print(f"Model loaded. Embedding dimension: {dim}")
 
         # Create documents for embedding
         self.documents = []
@@ -181,14 +181,14 @@ class VectorSearch:
                 with open(cache_path, "rb") as f:
                     cached_data = pickle.load(f)
                     self.doc_embeddings = cached_data["embeddings"]
-                    print(
-                        f"✓ Loaded cached embeddings. Shape: {self.doc_embeddings.shape}"
-                    )
+                    shape = self.doc_embeddings.shape
+                    print(f"✓ Loaded cached embeddings. Shape: {shape}")
             except Exception as e:
-                print(f"Failed to load cache: {e}. Regenerating embeddings...")
+                msg = f"Failed to load cache: {e}. Regenerating..."
+                print(msg)
                 self._generate_and_cache_embeddings(cache_path)
         else:
-            print(f"No cached embeddings found. Generating...")
+            print("No cached embeddings found. Generating...")
             self._generate_and_cache_embeddings(cache_path)
 
     def _get_cache_key(self) -> str:
@@ -205,11 +205,13 @@ class VectorSearch:
         """
         Generate embeddings and cache them to disk.
         """
-        print(f"Generating embeddings for {len(self.documents)} poses...")
+        num_docs = len(self.documents)
+        print(f"Generating embeddings for {num_docs} poses...")
         self.doc_embeddings = self.model.encode(
             self.documents, show_progress_bar=True, convert_to_numpy=True
         )
-        print(f"Embeddings generated. Shape: {self.doc_embeddings.shape}")
+        shape = self.doc_embeddings.shape
+        print(f"Embeddings generated. Shape: {shape}")
 
         # Cache embeddings
         os.makedirs(self.cache_dir, exist_ok=True)
@@ -261,7 +263,8 @@ class HybridSearch:
     """
     Hybrid search combining BM25 text search and vector semantic search.
 
-    Uses Weighted Product combination with alpha=0.4 (best configuration from experiments).
+    Uses Weighted Product combination with alpha=0.4 (best
+    configuration from experiments).
     """
 
     def __init__(
@@ -290,7 +293,7 @@ class HybridSearch:
         - MRR: 66.0%
         - Alpha: 0.4 (40% BM25, 60% Vector)
 
-        Final score = (norm_bm25_score ^ alpha) * (norm_vector_score ^ (1-alpha))
+        Final score = (norm_bm25 ^ alpha) * (norm_vector ^ (1-alpha))
 
         Args:
             query: Search query
@@ -316,10 +319,9 @@ class HybridSearch:
             min_score = np.min(scores)
             max_score = np.max(scores)
             if max_score - min_score == 0:
-                return np.ones_like(scores) * 0.5  # Avoid zero product
-            return (scores - min_score) / (
-                max_score - min_score
-            ) + 0.01  # Add small epsilon
+                return np.ones_like(scores) * 0.5
+            normalized = (scores - min_score) / (max_score - min_score)
+            return normalized + 0.01
 
         bm25_scores_norm = normalize_scores(bm25_scores_raw)
         vector_scores_norm = normalize_scores(vector_scores_raw)
@@ -327,9 +329,10 @@ class HybridSearch:
         # Combine with weighted product
         combined_scores = {}
         for i, pose_id in enumerate(self.bm25_search.pose_ids):
-            combined_scores[pose_id] = (bm25_scores_norm[i] ** alpha) * (
+            score = (bm25_scores_norm[i] ** alpha) * (
                 vector_scores_norm[i] ** (1 - alpha)
             )
+            combined_scores[pose_id] = score
 
         # Sort and return top-k
         sorted_results = sorted(
@@ -340,7 +343,8 @@ class HybridSearch:
 
 def create_retrieval_system(pose_dict: Dict[int, Dict]) -> HybridSearch:
     """
-    Create the complete retrieval system with best configuration from experiments.
+    Create the complete retrieval system with best configuration
+    from experiments.
 
     This is a convenience function that sets up:
     - BM25 search with all 7 fields

@@ -52,7 +52,8 @@ def get_db_connection():
         )
         return conn
     except psycopg2.Error as e:
-        raise psycopg2.Error(f"Failed to connect to database: {str(e)}")
+        error_msg = f"Failed to connect to database: {str(e)}"
+        raise psycopg2.Error(error_msg)
 
 
 def log_conversation(
@@ -84,7 +85,8 @@ def log_conversation(
         conversation_id (UUID string)
 
     Note:
-        Handles errors gracefully - logs to console but doesn't raise exceptions
+        Handles errors gracefully - logs to console but doesn't raise
+        exceptions
     """
     if conversation_id is None:
         conversation_id = str(uuid.uuid4())
@@ -96,8 +98,8 @@ def log_conversation(
         cursor.execute(
             """
             INSERT INTO conversations (
-                id, timestamp, question, answer, model, 
-                retrieved_docs, relevance, response_time_ms, 
+                id, timestamp, question, answer, model,
+                retrieved_docs, relevance, response_time_ms,
                 tokens_used, cost_usd, feedback
             ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             """,
@@ -112,7 +114,7 @@ def log_conversation(
                 response_time_ms,
                 tokens_used,
                 cost_usd,
-                None,  # feedback starts as NULL
+                None,
             ),
         )
 
@@ -122,7 +124,6 @@ def log_conversation(
 
     except Exception as e:
         print(f"Error logging conversation: {str(e)}")
-        # Don't raise - logging failures shouldn't break the application
 
     return conversation_id
 
@@ -151,8 +152,8 @@ def update_feedback(conversation_id: str, feedback: int) -> bool:
 
         cursor.execute(
             """
-            UPDATE conversations 
-            SET feedback = %s 
+            UPDATE conversations
+            SET feedback = %s
             WHERE id = %s
             """,
             (feedback, conversation_id),
@@ -189,12 +190,12 @@ def get_recent_conversations(limit: int = 5) -> List[Dict[str, Any]]:
 
         cursor.execute(
             """
-            SELECT 
-                id, timestamp, question, answer, model, 
-                retrieved_docs, relevance, response_time_ms, 
+            SELECT
+                id, timestamp, question, answer, model,
+                retrieved_docs, relevance, response_time_ms,
                 tokens_used, cost_usd, feedback
-            FROM conversations 
-            ORDER BY timestamp DESC 
+            FROM conversations
+            ORDER BY timestamp DESC
             LIMIT %s
             """,
             (limit,),
@@ -204,7 +205,6 @@ def get_recent_conversations(limit: int = 5) -> List[Dict[str, Any]]:
         cursor.close()
         conn.close()
 
-        # Convert to list of dicts
         return [dict(conv) for conv in conversations]
 
     except Exception as e:
@@ -228,7 +228,7 @@ def get_feedback_stats() -> Dict[str, int]:
 
         cursor.execute(
             """
-            SELECT 
+            SELECT
                 COUNT(CASE WHEN feedback = 1 THEN 1 END) as positive,
                 COUNT(CASE WHEN feedback = -1 THEN 1 END) as negative,
                 COUNT(*) as total
@@ -266,18 +266,20 @@ def get_relevance_stats() -> Dict[str, Any]:
         conn = get_db_connection()
         cursor = conn.cursor()
 
-        cursor.execute(
-            """
-            SELECT 
-                COUNT(CASE WHEN relevance = 'RELEVANT' THEN 1 END) as relevant,
-                COUNT(CASE WHEN relevance = 'PARTLY_RELEVANT' THEN 1 END) as partly_relevant,
-                COUNT(CASE WHEN relevance = 'NON_RELEVANT' THEN 1 END) as non_relevant,
+        query = """
+            SELECT
+                COUNT(CASE WHEN relevance = 'RELEVANT'
+                    THEN 1 END) as relevant,
+                COUNT(CASE WHEN relevance = 'PARTLY_RELEVANT'
+                    THEN 1 END) as partly_relevant,
+                COUNT(CASE WHEN relevance = 'NON_RELEVANT'
+                    THEN 1 END) as non_relevant,
                 COUNT(*) as total
             FROM conversations
             WHERE relevance IS NOT NULL
             """
-        )
 
+        cursor.execute(query)
         result = cursor.fetchone()
         cursor.close()
         conn.close()
@@ -325,7 +327,7 @@ def get_cost_over_time(days: int = 7) -> List[Dict[str, Any]]:
 
         cursor.execute(
             """
-            SELECT 
+            SELECT
                 DATE(timestamp) as date,
                 SUM(cost_usd) as total_cost,
                 COUNT(*) as conversation_count
@@ -368,7 +370,7 @@ def get_token_usage_over_time(days: int = 7) -> List[Dict[str, Any]]:
 
         cursor.execute(
             """
-            SELECT 
+            SELECT
                 DATE(timestamp) as date,
                 SUM(tokens_used) as total_tokens,
                 AVG(tokens_used) as avg_tokens,
@@ -411,7 +413,7 @@ def get_response_time_stats(days: int = 7) -> List[Dict[str, Any]]:
 
         cursor.execute(
             """
-            SELECT 
+            SELECT
                 DATE(timestamp) as date,
                 AVG(response_time_ms) as avg_response_time,
                 MIN(response_time_ms) as min_response_time,
@@ -452,7 +454,7 @@ def get_model_usage_stats() -> List[Dict[str, Any]]:
 
         cursor.execute(
             """
-            SELECT 
+            SELECT
                 model,
                 COUNT(*) as usage_count,
                 AVG(response_time_ms) as avg_response_time,

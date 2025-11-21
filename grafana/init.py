@@ -24,7 +24,7 @@ import sys
 import json
 import time
 import requests
-from typing import Dict, Any, Optional
+from typing import Dict
 from dotenv import load_dotenv
 
 # Load environment variables

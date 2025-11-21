@@ -46,7 +46,8 @@ def get_db_connection():
         )
         return conn
     except psycopg2.Error as e:
-        raise psycopg2.Error(f"Failed to connect to database: {str(e)}")
+        error_msg = f"Failed to connect to database: {str(e)}"
+        raise psycopg2.Error(error_msg)
 
 
 def create_tables(retry_count=5, retry_delay=2):
@@ -64,7 +65,8 @@ def create_tables(retry_count=5, retry_delay=2):
     - response_time_ms: Response time in milliseconds
     - tokens_used: Number of tokens used
     - cost_usd: Cost in USD
-    - feedback: User feedback (1 for thumbs up, -1 for thumbs down, NULL for no feedback)
+    - feedback: User feedback (1 for thumbs up, -1 for thumbs down,
+      NULL for no feedback)
 
     Indices:
     - timestamp (for time-based queries)
@@ -110,7 +112,7 @@ def create_tables(retry_count=5, retry_delay=2):
             # Create indices for common queries
             cursor.execute(
                 """
-                CREATE INDEX IF NOT EXISTS idx_conversations_timestamp 
+                CREATE INDEX IF NOT EXISTS idx_conversations_timestamp
                 ON conversations(timestamp DESC)
                 """
             )
@@ -118,8 +120,8 @@ def create_tables(retry_count=5, retry_delay=2):
 
             cursor.execute(
                 """
-                CREATE INDEX IF NOT EXISTS idx_conversations_feedback 
-                ON conversations(feedback) 
+                CREATE INDEX IF NOT EXISTS idx_conversations_feedback
+                ON conversations(feedback)
                 WHERE feedback IS NOT NULL
                 """
             )
@@ -127,8 +129,8 @@ def create_tables(retry_count=5, retry_delay=2):
 
             cursor.execute(
                 """
-                CREATE INDEX IF NOT EXISTS idx_conversations_relevance 
-                ON conversations(relevance) 
+                CREATE INDEX IF NOT EXISTS idx_conversations_relevance
+                ON conversations(relevance)
                 WHERE relevance IS NOT NULL
                 """
             )
@@ -136,7 +138,7 @@ def create_tables(retry_count=5, retry_delay=2):
 
             cursor.execute(
                 """
-                CREATE INDEX IF NOT EXISTS idx_conversations_model 
+                CREATE INDEX IF NOT EXISTS idx_conversations_model
                 ON conversations(model)
                 """
             )
@@ -156,9 +158,11 @@ def create_tables(retry_count=5, retry_delay=2):
                 print(f"Retrying in {retry_delay} seconds...")
                 time.sleep(retry_delay)
             else:
-                print(
-                    f"Error creating tables after {retry_count} attempts: {str(e)}"
+                msg = (
+                    f"Error creating tables after {retry_count} "
+                    f"attempts: {str(e)}"
                 )
+                print(msg)
                 return False
 
     return False
@@ -204,7 +208,7 @@ def verify_schema():
         cursor.execute(
             """
             SELECT EXISTS (
-                SELECT FROM information_schema.tables 
+                SELECT FROM information_schema.tables
                 WHERE table_name = 'conversations'
             )
             """
@@ -221,8 +225,8 @@ def verify_schema():
         # Check table structure
         cursor.execute(
             """
-            SELECT column_name, data_type 
-            FROM information_schema.columns 
+            SELECT column_name, data_type
+            FROM information_schema.columns
             WHERE table_name = 'conversations'
             ORDER BY ordinal_position
             """
@@ -246,7 +250,7 @@ def verify_schema():
         actual_columns = {col[0] for col in columns}
 
         if expected_columns != actual_columns:
-            print(f"✗ Table structure mismatch")
+            print("✗ Table structure mismatch")
             print(f"  Expected: {expected_columns}")
             print(f"  Actual: {actual_columns}")
             cursor.close()

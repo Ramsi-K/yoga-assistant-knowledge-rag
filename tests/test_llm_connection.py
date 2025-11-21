@@ -27,10 +27,10 @@ try:
         messages=[{"role": "user", "content": "Say 'Hello' in one word."}],
         max_tokens=10,
         temperature=0.3,
-        timeout=10.0,  # 10 second timeout
+        timeout=10.0,
     )
 
-    print(f"✓ Connection successful!")
+    print("✓ Connection successful!")
     print(f"Response: {response.choices[0].message.content}")
     print(f"Tokens used: {response.usage.total_tokens}")
 
