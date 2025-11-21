@@ -10,7 +10,10 @@ Based on experiments in notebooks/03-retrieval-experiments.ipynb:
 - Configuration: alpha=0.4 (40% BM25, 60% Vector)
 """
 
+import os
 import re
+import pickle
+import hashlib
 import numpy as np
 import pandas as pd
 from typing import List, Dict, Any
@@ -115,6 +118,8 @@ class BM25Search:
 class VectorSearch:
     """
     Vector-based semantic search for yoga poses using sentence-transformers.
+
+    Embeddings are cached to disk to avoid regenerating on every startup.
     """
 
     def __init__(
@@ -122,6 +127,7 @@ class VectorSearch:
         pose_dict: Dict[int, Dict],
         embedding_model: str = "all-mpnet-base-v2",
         fields: List[str] = None,
+        cache_dir: str = ".cache/embeddings",
     ):
         """
         Initialize vector search with pose data and embedding model.
@@ -130,10 +136,12 @@ class VectorSearch:
             pose_dict: Dictionary mapping pose IDs to pose data
             embedding_model: Name of the sentence-transformers model to use
             fields: List of fields to embed (default: all searchable fields)
+            cache_dir: Directory to cache embeddings
         """
         self.pose_dict = pose_dict
         self.pose_ids = list(pose_dict.keys())
         self.embedding_model_name = embedding_model
+        self.cache_dir = cache_dir
 
         # Default fields to embed (best configuration from experiments)
         if fields is None:
@@ -163,12 +171,54 @@ class VectorSearch:
             doc_text = self._create_document_text(pose)
             self.documents.append(doc_text)
 
-        # Generate embeddings for all documents
+        # Try to load cached embeddings
+        cache_key = self._get_cache_key()
+        cache_path = os.path.join(self.cache_dir, f"{cache_key}.pkl")
+
+        if os.path.exists(cache_path):
+            print(f"Loading cached embeddings from {cache_path}...")
+            try:
+                with open(cache_path, "rb") as f:
+                    cached_data = pickle.load(f)
+                    self.doc_embeddings = cached_data["embeddings"]
+                    print(
+                        f"✓ Loaded cached embeddings. Shape: {self.doc_embeddings.shape}"
+                    )
+            except Exception as e:
+                print(f"Failed to load cache: {e}. Regenerating embeddings...")
+                self._generate_and_cache_embeddings(cache_path)
+        else:
+            print(f"No cached embeddings found. Generating...")
+            self._generate_and_cache_embeddings(cache_path)
+
+    def _get_cache_key(self) -> str:
+        """
+        Generate a cache key based on model name, fields, and document content.
+        """
+        # Create a hash of the configuration and documents
+        config_str = f"{self.embedding_model_name}_{','.join(self.fields)}"
+        docs_str = "".join(self.documents[:10])  # Sample first 10 docs
+        combined = config_str + docs_str
+        return hashlib.md5(combined.encode()).hexdigest()
+
+    def _generate_and_cache_embeddings(self, cache_path: str):
+        """
+        Generate embeddings and cache them to disk.
+        """
         print(f"Generating embeddings for {len(self.documents)} poses...")
         self.doc_embeddings = self.model.encode(
             self.documents, show_progress_bar=True, convert_to_numpy=True
         )
         print(f"Embeddings generated. Shape: {self.doc_embeddings.shape}")
+
+        # Cache embeddings
+        os.makedirs(self.cache_dir, exist_ok=True)
+        try:
+            with open(cache_path, "wb") as f:
+                pickle.dump({"embeddings": self.doc_embeddings}, f)
+            print(f"✓ Cached embeddings to {cache_path}")
+        except Exception as e:
+            print(f"Warning: Failed to cache embeddings: {e}")
 
     def _create_document_text(self, pose: Dict) -> str:
         """
